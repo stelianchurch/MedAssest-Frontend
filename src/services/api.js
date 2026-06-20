@@ -306,4 +306,11 @@ export const deleteSystemUser = async (userId) => {
   return response.data;
 };
 
+export const exportExcel = async () => {
+  const response = await api.get('export/excel/', {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
 export default api;

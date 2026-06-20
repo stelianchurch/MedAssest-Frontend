@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, ROLES } from '../../context/AuthContext';
+import { exportExcel } from '../../services/api';
 
 function SidebarContent({ basePath, userRole, userName, onNavigate, onLogout }) {
+  const [exporting, setExporting] = useState(false);
+
   const navLinkStyle = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all ${
       isActive
@@ -20,6 +23,26 @@ function SidebarContent({ basePath, userRole, userName, onNavigate, onLogout }) 
   const handleNavClick = () => {
     onNavigate?.();
   };
+
+  const handleExportExcel = useCallback(async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const blob = await exportExcel();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'medassest_export.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Export failed silently
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting]);
 
   return (
     <>
@@ -75,6 +98,15 @@ function SidebarContent({ basePath, userRole, userName, onNavigate, onLogout }) 
             <NavLink to="/admin/supporters-manager" className={adminLinkStyle} onClick={handleNavClick}>
               <span className="text-xl">🏢</span> إدارة قوائم الجهات
             </NavLink>
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all w-full text-right text-gray-600 hover:bg-purple-50 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="text-xl">{exporting ? '⏳' : '📥'}</span>
+              {exporting ? 'جاري التحميل...' : 'تصدير Excel'}
+            </button>
           </>
         )}
       </nav>
