@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/layout/Sidebar'; 
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import { formatCurrency } from '../../utils/formatters';
 import { fetchAidRequests } from '../../services/api';
 import { useAuth, ROLES } from '../../context/AuthContext'; // 🌟 استخدام السياق بدلاً من التخزين المحلي
@@ -89,10 +89,8 @@ export default function Dashboard() {
   }, [requests]);
 
   return (
-    <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-      <Sidebar />
-
-      <main className="flex-1 p-6 lg:p-10 w-full overflow-y-auto">
+    <DashboardLayout>
+      <div className="p-6 lg:p-10 h-full">
         
         <header className="mb-8 animate-fadeIn">
           <h2 className="text-3xl font-bold text-gray-800 font-serif">لوحة القيادة التنفيذية</h2>
@@ -226,8 +224,8 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

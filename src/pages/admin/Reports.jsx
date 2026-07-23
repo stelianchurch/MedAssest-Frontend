@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import { formatCurrency } from '../../utils/formatters';
 import { fetchAidRequests } from '../../services/api';
 
@@ -135,8 +135,7 @@ export default function Reports() {
   const rejOffset  = -(compDash + pendDash);
 
   return (
-    <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-      <Sidebar />
+    <DashboardLayout>
 
       <div className="flex-1 p-6 md:p-10 w-full overflow-y-auto overflow-x-hidden">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4 border-b border-gray-200 pb-4">
@@ -323,6 +322,6 @@ export default function Reports() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

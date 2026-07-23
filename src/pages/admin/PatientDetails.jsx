@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { formatDate } from '../../utils/formatters';
 import { 
@@ -121,31 +121,28 @@ export default function PatientDetails() {
 
   if (loading) {
     return (
-      <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-        <Sidebar />
+      <DashboardLayout>
         <div className="flex-1 flex justify-center items-center">
           <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error || !patientData) {
     return (
-      <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-        <Sidebar />
+      <DashboardLayout>
         <div className="flex-1 flex justify-center items-center p-10">
           <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-200 font-bold text-center">
             ⚠️ {error || 'سجل المريض غير موجود.'}
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen relative" dir="rtl">
-      <Sidebar />
+    <DashboardLayout>
 
       <ConfirmModal 
         isOpen={deleteModal.isOpen}
@@ -286,6 +283,6 @@ export default function PatientDetails() {
 
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

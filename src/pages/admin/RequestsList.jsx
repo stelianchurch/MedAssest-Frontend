@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { fetchAidRequests } from '../../services/api';
 import { useAuth, ROLES } from '../../context/AuthContext';
@@ -164,9 +164,8 @@ export default function RequestsList() {
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-      <Sidebar />
-      <div className="flex-1 p-6 lg:p-10 w-full overflow-hidden">
+    <DashboardLayout>
+      <div className="p-6 lg:p-10 overflow-hidden">
         
         {/* 🌟 إعادة هيكلة الترويسة لتصبح مرنة (Flexbox) ودعم زر الإضافة */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
@@ -222,10 +221,11 @@ export default function RequestsList() {
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-right border-collapse min-w-[800px]">
+              <table className="w-full text-right border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-gray-50 text-gray-700 text-sm border-b border-gray-200">
                     <th className="p-4 whitespace-nowrap">رقم الطلب</th>
+                    <th className="p-4 whitespace-nowrap">رقم التقرير الطبي</th>
                     <th className="p-4 whitespace-nowrap">اسم المريض</th>
                     <th className="p-4 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap" onClick={() => handleHeaderClick('type')}>
                       <div className="flex items-center gap-2">{renderSortIcon('type')} نوع المساعدة</div>
@@ -251,6 +251,7 @@ export default function RequestsList() {
                     return (
                       <tr key={req.id} className="hover:bg-blue-50/30 border-b border-gray-100 transition-colors">
                         <td className="p-4 font-mono text-gray-400">#{req.id}</td>
+                        <td className="p-4 text-gray-500 text-sm font-mono" dir="ltr">{req.medical_report_number || '—'}</td>
                         <td className="p-4 font-bold text-gray-800">{req.patient_full_name}</td>
                         <td className="p-4 text-gray-600">{typeName}</td>
                         <td className="p-4 font-bold text-blue-700 text-center">{formatCurrency(req.estimated_cost)}</td>
@@ -299,6 +300,6 @@ export default function RequestsList() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

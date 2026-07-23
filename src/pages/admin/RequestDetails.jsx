@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { formatCurrency, formatDate, isPastDate } from '../../utils/formatters'; 
 import { 
@@ -11,6 +11,7 @@ import {
   fetchAllProviders,
   assignProviderToRequest,
   removeProviderFromRequest,
+  updateProviderContribution,
   updateAidRequest,
   updatePatientDetails 
 } from '../../services/api';
@@ -35,7 +36,7 @@ export default function RequestDetails() {
   
   // 🌟 حالات تعديل الطلب الطبي أصبحت تشمل التاريخ
   const [isEditingRequest, setIsEditingRequest] = useState(false);
-  const [editFormData, setEditFormData] = useState({ place_of_aid: '', estimated_cost: '', description: '', date_of_aid: '' });
+  const [editFormData, setEditFormData] = useState({ place_of_aid: '', estimated_cost: '', description: '', date_of_aid: '', medical_report_number: '' });
   const [isSavingRequest, setIsSavingRequest] = useState(false);
 
   const [isEditingPatient, setIsEditingPatient] = useState(false);
@@ -47,6 +48,8 @@ export default function RequestDetails() {
 
   const [showContributionForm, setShowContributionForm] = useState(false);
   const [contribData, setContribData] = useState({ providerId: '', amount: '', type: 'fixed', notes: '' });
+  const [editingContribId, setEditingContribId] = useState(null);
+  const [editContribData, setEditContribData] = useState({ providerId: '', amount: '', type: 'fixed', notes: '' });
 
   const STATUS_MAP = {
     'pending': 'قيد الدراسة',
@@ -71,7 +74,8 @@ export default function RequestDetails() {
           place_of_aid: reqData.place_of_aid || '',
           estimated_cost: reqData.estimated_cost || '',
           description: reqData.description || '',
-          date_of_aid: reqData.date_of_aid ? reqData.date_of_aid.split('T')[0] : ''
+          date_of_aid: reqData.date_of_aid ? reqData.date_of_aid.split('T')[0] : '',
+          medical_report_number: reqData.medical_report_number || ''
         });
         
         if (reqData.patient) {
@@ -131,14 +135,16 @@ export default function RequestDetails() {
         place_of_aid: editFormData.place_of_aid,
         estimated_cost: Number(editFormData.estimated_cost),
         description: editFormData.description,
-        date_of_aid: editFormData.date_of_aid
+        date_of_aid: editFormData.date_of_aid,
+        medical_report_number: editFormData.medical_report_number?.trim() || null
       });
       setRequestData(prev => ({
         ...prev,
         place_of_aid: updated.place_of_aid,
         estimated_cost: updated.estimated_cost,
         description: updated.description,
-        date_of_aid: updated.date_of_aid
+        date_of_aid: updated.date_of_aid,
+        medical_report_number: updated.medical_report_number
       }));
       setIsEditingRequest(false);
       showNotification('تم تحديث بيانات التقرير الطبي بنجاح');
@@ -208,6 +214,42 @@ export default function RequestDetails() {
     }
   };
 
+  const handleStartEditContrib = (cont) => {
+    setEditingContribId(cont.id);
+    setEditContribData({
+      providerId: cont.aid_provider?.toString() || '',
+      amount: cont.aid_amount?.toString() || '',
+      type: cont.type_of_aid_amount || 'fixed',
+      notes: cont.notes || ''
+    });
+  };
+
+  const handleCancelEditContrib = () => {
+    setEditingContribId(null);
+    setEditContribData({ providerId: '', amount: '', type: 'fixed', notes: '' });
+  };
+
+  const handleSaveContribEdit = async () => {
+    if (!editContribData.amount) {
+      return showNotification('الرجاء إدخال المبلغ', 'error');
+    }
+
+    try {
+      await updateProviderContribution(editingContribId, {
+        aid_amount: editContribData.amount,
+        type_of_aid_amount: editContribData.type,
+        notes: editContribData.notes
+      });
+
+      const updatedReq = await fetchAidRequestDetails(id);
+      setRequestData(updatedReq);
+      showNotification('تم تحديث المساهمة بنجاح');
+      handleCancelEditContrib();
+    } catch (err) {
+      showNotification('فشل تحديث المساهمة. تأكد من البيانات.', 'error');
+    }
+  };
+
   const executeDeleteContribution = async () => {
     setIsDeletingContrib(true);
     try {
@@ -225,26 +267,24 @@ export default function RequestDetails() {
 
   if (loading) {
     return (
-      <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-        <Sidebar />
+      <DashboardLayout>
         <div className="flex-1 flex justify-center items-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error || !requestData || !patientData) {
     return (
-      <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-        <Sidebar />
+      <DashboardLayout>
         <div className="flex-1 flex justify-center items-center p-10">
           <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-200 font-bold text-center">
             <span className="text-4xl block mb-2">⚠️</span>
             {error || 'الطلب غير موجود في الخادم.'}
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -266,8 +306,7 @@ export default function RequestDetails() {
   const isOverdue = isPastDate(requestData.date_of_aid) && requestData.request_status !== 'completed';
 
   return (
-    <div className="flex bg-gray-50 min-h-[calc(100vh-68px)] relative" dir="rtl">
-      <Sidebar />
+    <DashboardLayout>
 
       <ConfirmModal 
         isOpen={deleteContribModal.isOpen}
@@ -460,6 +499,16 @@ export default function RequestDetails() {
                         className="w-full bg-white border border-gray-300 p-2.5 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-400 font-mono"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-600 mb-1">رقم التقرير الطبي:</label>
+                      <input 
+                        type="text" 
+                        value={editFormData.medical_report_number}
+                        onChange={(e) => setEditFormData({ ...editFormData, medical_report_number: e.target.value })}
+                        className="w-full bg-white border border-gray-300 p-2.5 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-400"
+                        placeholder="اختياري"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-black text-gray-600 mb-1">وصف الحالة الطبية والتوصيات:</label>
@@ -485,7 +534,8 @@ export default function RequestDetails() {
                           place_of_aid: requestData.place_of_aid, 
                           estimated_cost: requestData.estimated_cost, 
                           description: requestData.description,
-                          date_of_aid: requestData.date_of_aid ? requestData.date_of_aid.split('T')[0] : ''
+                          date_of_aid: requestData.date_of_aid ? requestData.date_of_aid.split('T')[0] : '',
+                          medical_report_number: requestData.medical_report_number || ''
                         });
                       }}
                       className="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold text-xs px-6 py-2.5 rounded-lg cursor-pointer transition-colors"
@@ -500,6 +550,7 @@ export default function RequestDetails() {
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">اسم المشفى المقترح</span><span className="font-bold text-gray-800">{requestData.place_of_aid}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">تاريخ التنفيذ</span><span className={`font-bold ${isOverdue ? 'text-orange-600' : 'text-gray-800'}`}>{formatDate(requestData.date_of_aid)}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">التكلفة التقديرية</span><span className="font-black text-red-600 text-lg">{formatCurrency(requestData.estimated_cost)}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">رقم التقرير الطبي</span><span className="font-bold text-gray-800 font-mono" dir="ltr">{requestData.medical_report_number || '—'}</span></div>
                   <div className="col-span-2 mt-2">
                     <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-2">وصف الحالة الطبية والتوصيات:</span>
                     <span className="font-bold block bg-white p-4 rounded-xl border border-red-200 text-gray-700 leading-relaxed">{requestData.description}</span>
@@ -535,23 +586,58 @@ export default function RequestDetails() {
                       const isPercentage = cont.type_of_aid_amount === 'percentage';
                       const calculatedAmount = isPercentage ? ((amountRaw / 100) * estimatedTotalCost) : amountRaw;
 
+                      const isEditing = editingContribId === cont.id;
+
+                      if (isEditing) {
+                        return (
+                          <div key={cont.id} className="p-3 rounded-xl border text-sm bg-white border-emerald-300 space-y-3 animate-fadeIn">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-emerald-800">{cont.provider_name}</span>
+                              {cont.invoice_number && <span className="text-[10px] font-mono font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{cont.invoice_number}</span>}
+                            </div>
+                            <div className="flex gap-2">
+                              <select value={editContribData.type} onChange={(e) => setEditContribData({...editContribData, type: e.target.value})} className="w-1/3 border border-gray-300 p-2 rounded-lg text-xs bg-white font-bold outline-none">
+                                <option value="fixed">مبلغ مقطوع</option>
+                                <option value="percentage">نسبة مئوية</option>
+                              </select>
+                              <input type="number" placeholder={editContribData.type === 'fixed' ? "المبلغ" : "النسبة"} value={editContribData.amount} onChange={(e) => setEditContribData({...editContribData, amount: e.target.value})} className="w-2/3 border border-gray-300 p-2 rounded-lg text-sm outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            </div>
+                            <input type="text" placeholder="ملاحظات إضافية (اختياري)" value={editContribData.notes} onChange={(e) => setEditContribData({...editContribData, notes: e.target.value})} className="w-full border border-gray-300 p-2 rounded-lg text-sm outline-none" />
+                            <div className="flex gap-2">
+                              <button onClick={handleSaveContribEdit} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 cursor-pointer shadow-sm">حفظ</button>
+                              <button onClick={handleCancelEditContrib} className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-bold hover:bg-gray-300 cursor-pointer">إلغاء</button>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={cont.id} className="flex justify-between items-center p-3 rounded-xl border text-sm bg-emerald-50 border-emerald-100 group">
                           <div>
                             <span className="font-bold text-emerald-800 block">{cont.provider_name}</span>
+                            {cont.invoice_number && <span className="text-[10px] font-mono font-bold text-gray-400 block leading-tight">{cont.invoice_number}</span>}
                             {isPercentage && <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">تغطية {amountRaw}%</span>}
                           </div>
                           
                           <div className="flex items-center gap-3">
                             <span className="font-black text-emerald-600">{formatCurrency(calculatedAmount)}</span>
                             {isAdmin && (
-                              <button 
-                                onClick={() => setDeleteContribModal({ isOpen: true, id: cont.id, name: cont.provider_name })}
-                                className="text-red-500 hover:text-red-700 bg-red-100 hover:bg-red-200 p-1.5 rounded-lg transition-colors cursor-pointer opacity-100 lg:opacity-0 group-hover:opacity-100 shrink-0 text-xs"
-                                title="إلغاء المساهمة"
-                              >
-                                ❌
-                              </button>
+                              <>
+                                <button 
+                                  onClick={() => handleStartEditContrib(cont)}
+                                  className="text-blue-500 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 text-xs"
+                                  title="تعديل المساهمة"
+                                >
+                                  ✏️
+                                </button>
+                                <button 
+                                  onClick={() => setDeleteContribModal({ isOpen: true, id: cont.id, name: cont.provider_name })}
+                                  className="text-red-500 hover:text-red-700 bg-red-100 hover:bg-red-200 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 text-xs"
+                                  title="إلغاء المساهمة"
+                                >
+                                  ❌
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -611,6 +697,8 @@ export default function RequestDetails() {
                       className="w-full border border-gray-300 p-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-400" 
                     />
 
+                    <p className="text-[10px] text-gray-400 font-bold text-center">رقم الفاتورة سيتم إنشاؤه تلقائياً</p>
+
                     <div className="flex gap-2 mt-2">
                       <button onClick={handleAddContribution} className="flex-1 bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-emerald-700 cursor-pointer shadow-sm">إضافة</button>
                       <button onClick={() => setShowContributionForm(false)} className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-300 cursor-pointer">إلغاء</button>
@@ -624,6 +712,6 @@ export default function RequestDetails() {
 
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

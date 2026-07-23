@@ -276,6 +276,11 @@ export const removeProviderFromRequest = async (contributionId) => {
   return response.data;
 };
 
+export const updateProviderContribution = async (contributionId, data) => {
+  const response = await api.patch(`aid-requests/providers/${contributionId}/`, data);
+  return response.data;
+};
+
 export const updateAidRequest = async (id, payload) => {
   const response = await api.patch(`aid-requests/requests/${id}/`, payload);
   return response.data;

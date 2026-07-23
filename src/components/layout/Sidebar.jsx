@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, ROLES } from '../../context/AuthContext';
+import { useSidebar } from '../../context/SidebarContext';
 import { exportExcel } from '../../services/api';
 
 function SidebarContent({ basePath, userRole, userName, onNavigate, onLogout }) {
@@ -128,30 +129,11 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { mobileOpen, closeMobile } = useSidebar();
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (!mobileOpen) return undefined;
-
-    document.body.classList.add('sidebar-drawer-open');
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        setMobileOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.body.classList.remove('sidebar-drawer-open');
-      window.removeEventListener('keydown', handleEscape);
-    };
-  }, [mobileOpen]);
+    closeMobile();
+  }, [location.pathname, closeMobile]);
 
   if (!user) return null;
 
@@ -159,10 +141,8 @@ export default function Sidebar() {
   const userName = user.name || 'مستخدم النظام';
   const basePath = userRole === ROLES.ADMIN ? '/admin' : '/processor';
 
-  const closeMobileDrawer = () => setMobileOpen(false);
-
   const handleLogout = () => {
-    closeMobileDrawer();
+    closeMobile();
     logout();
     navigate('/', { replace: true });
   };
@@ -171,29 +151,17 @@ export default function Sidebar() {
     basePath,
     userRole,
     userName,
-    onNavigate: closeMobileDrawer,
+    onNavigate: closeMobile,
     onLogout: handleLogout,
   };
 
   return (
     <>
-      <button
-        type="button"
-        className="sidebar-mobile-trigger lg:hidden"
-        aria-label="فتح قائمة التنقل"
-        aria-expanded={mobileOpen}
-        aria-controls="mobile-sidebar-drawer"
-        onClick={() => setMobileOpen(true)}
-      >
-        <span className="text-xl leading-none" aria-hidden="true">☰</span>
-      </button>
-
       {mobileOpen && (
-        <button
-          type="button"
+        <div
           className="sidebar-drawer-backdrop lg:hidden"
           aria-label="إغلاق قائمة التنقل"
-          onClick={closeMobileDrawer}
+          onClick={closeMobile}
         />
       )}
 

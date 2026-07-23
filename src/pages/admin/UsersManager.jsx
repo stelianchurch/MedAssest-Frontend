@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import { fetchUsers, createUser, updateUser, deleteSystemUser } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import { useAuth, ROLES } from '../../context/AuthContext';
@@ -146,8 +146,7 @@ export default function UsersManager() {
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen relative" dir="rtl">
-      <Sidebar />
+    <DashboardLayout>
 
       {toast.show && (
         <div className={`fixed top-10 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-xl z-50 flex items-center gap-3 text-white font-bold transition-all duration-300 ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
@@ -187,7 +186,7 @@ export default function UsersManager() {
         </div>
       )}
 
-      <div className="flex-1 p-6 lg:p-10 w-full overflow-y-auto">
+      <div className="p-6 lg:p-10 h-full">
         <div className="mb-8 border-b border-gray-200 pb-4">
           <h2 className="text-3xl font-bold text-gray-800">إدارة حسابات النظام</h2>
           <p className="text-gray-500 mt-2 font-bold">إدارة فعلية للمستخدمين المسجلين في قاعدة بيانات الخادم.</p>
@@ -343,6 +342,6 @@ export default function UsersManager() {
 
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

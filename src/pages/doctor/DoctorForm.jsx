@@ -31,7 +31,7 @@ export default function DoctorForm() {
       maritalStatus: 'عازب', familyMembersCount: '', jobType: '', job: '', salary: ''
     },
     otherInfo: {
-      surgeryType: 'عمل جراحي', hospital: '', surgeryDate: '', specialNeeds: '', estimatedCost: '', generalNote: ''
+      surgeryType: 'عمل جراحي', hospital: '', surgeryDate: '', specialNeeds: '', estimatedCost: '', generalNote: '', medicalReportNumber: ''
     }
   };
 
@@ -180,12 +180,14 @@ export default function DoctorForm() {
         }
       }
 
+      const medicalReportNumber = formData.otherInfo.medicalReportNumber?.trim() || '';
       const aidRequestPayload = {
         patient: targetPatientId,
         place_of_aid: formData.otherInfo.hospital,
         date_of_aid: formData.otherInfo.surgeryDate,
         estimated_cost: Number(formData.otherInfo.estimatedCost) || 0,
         description: `النوع: ${formData.otherInfo.surgeryType} | الاحتياجات: ${formData.otherInfo.specialNeeds} | ملاحظات: ${formData.otherInfo.generalNote}`,
+        ...(medicalReportNumber && { medical_report_number: medicalReportNumber }),
       };
 
       await createAidRequest(aidRequestPayload);
@@ -522,6 +524,11 @@ export default function DoctorForm() {
                   <div>
                     <label className="block text-sm font-bold text-red-900 mb-2">التكلفة التقديرية (ل.س) *</label>
                     <input required type="number" min="0" onKeyDown={preventInvalidChars} value={formData.otherInfo.estimatedCost} onChange={(e) => handleInputChange('otherInfo', 'estimatedCost', e.target.value)} className="w-full border border-red-300 p-2.5 rounded-lg bg-white text-red-700 font-bold text-lg focus:ring-2 focus:ring-red-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="مثال: 1500000" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-red-900 mb-2">رقم التقرير الطبي</label>
+                    <input type="text" value={formData.otherInfo.medicalReportNumber} onChange={(e) => handleInputChange('otherInfo', 'medicalReportNumber', e.target.value)} className="w-full border border-red-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-red-400 outline-none" placeholder="اختياري — أدخل رقم التقرير إن وجد" />
                   </div>
 
                   <div className="md:col-span-2">

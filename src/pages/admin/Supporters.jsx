@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import { formatCurrency } from '../../utils/formatters';
 import { fetchAidRequests, fetchAllProviders } from '../../services/api'; // 🌟 استيراد دالة جلب الجهات
 
@@ -119,8 +119,7 @@ export default function Supporters() {
   }, [searchTerm, supporterStats]);
 
   return (
-    <div className="flex bg-gray-50 min-h-screen" dir="rtl">
-      <Sidebar />
+    <DashboardLayout>
 
       <div className="flex-1 p-6 lg:p-10 w-full overflow-y-auto">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-6 border-b border-gray-200 pb-6">
@@ -214,6 +213,6 @@ export default function Supporters() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

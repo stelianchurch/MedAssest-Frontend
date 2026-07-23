@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/layout/Sidebar';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { 
   fetchAllProviders, 
@@ -125,8 +125,7 @@ export default function SupportersManager() {
   });
 
   return (
-    <div className="flex bg-gray-50 min-h-[calc(100vh-68px)] relative" dir="rtl">
-      <Sidebar />
+    <DashboardLayout>
 
       {/* 🌟 نافذة الحذف المخصصة */}
       <ConfirmModal 
@@ -287,6 +286,6 @@ export default function SupportersManager() {
         </div>
 
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
