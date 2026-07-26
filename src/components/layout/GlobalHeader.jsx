@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSidebar } from '../../context/SidebarContext';
 import ThemeToggle from '../ui/ThemeToggle';
+import logo from '/public/logo.png';
 
 export default function GlobalHeader() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function GlobalHeader() {
   const isDashboardPage = !isLoginPage && !location.pathname.startsWith('/doctor');
 
   return (
-    <header className="app-header p-4 shadow-md sticky top-0 z-50">
+    <header className="app-header p-2 shadow-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto flex justify-between items-center gap-4">
 
         <div className="flex items-center gap-3 min-w-0">
@@ -35,9 +36,10 @@ export default function GlobalHeader() {
             </button>
           )}
 
+          <img src={logo} className="w-10 lg:w-14 shrink-0" alt="logo" />
           <h1 className="text-sm lg:text-xl font-bold tracking-wide truncate">
             <span className="hidden lg:inline">أبرشية حمص وتوابعها للروم الأرثوذكس - </span>
-            صندوق القديس اليان الحمصي الطبي
+            صندوق القديس إيليان الحمصي الطبي
           </h1>
         </div>
 

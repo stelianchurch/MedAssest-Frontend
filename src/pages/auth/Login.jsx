@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, ROLES } from '../../context/AuthContext'; 
 import { loginUser } from '../../services/api';
-
+import logo from './../../../public/logo.png'
 // دالة فك تشفير الـ JWT (بدون مكتبات خارجية)
 const decodeJWT = (token) => {
   try {
@@ -79,12 +79,16 @@ export default function Login() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
-        <div className="bg-blue-800 p-8 text-center border-b-4 border-emerald-500">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner">
+        <div className="bg-blue-800 p-8 text-center border-b-4 border-emerald-500 ">
+          <div className='relative w-full flex  justify-between items-center'>
+
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-3xl shadow-inner">
             ⚕️
           </div>
+          <img src={logo} className='w-20 '/>
+          </div>
           <h1 className="text-2xl font-bold text-white">صندوق</h1>
-          <h1 className="text-2xl font-bold text-white">القديس اليان الحمصي الطبي</h1>
+          <h1 className="text-2xl font-bold text-white">القديس إيليان الحمصي الطبي</h1>
           <p className="text-blue-200 mt-2 text-sm font-bold">أبرشية حمص وتوابعها للروم الأرثوذكس</p>
         </div>
 
