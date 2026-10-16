@@ -36,7 +36,7 @@ export default function RequestDetails() {
   
   // 🌟 حالات تعديل الطلب الطبي أصبحت تشمل التاريخ
   const [isEditingRequest, setIsEditingRequest] = useState(false);
-  const [editFormData, setEditFormData] = useState({ place_of_aid: '', estimated_cost: '', description: '', date_of_aid: '', medical_report_number: '' });
+  const [editFormData, setEditFormData] = useState({ place_of_aid: '', estimated_cost: '', description: '', date_of_aid: '', medical_report_number: '', doctor_name: '' });
   const [isSavingRequest, setIsSavingRequest] = useState(false);
 
   const [isEditingPatient, setIsEditingPatient] = useState(false);
@@ -75,7 +75,8 @@ export default function RequestDetails() {
           estimated_cost: reqData.estimated_cost || '',
           description: reqData.description || '',
           date_of_aid: reqData.date_of_aid ? reqData.date_of_aid.split('T')[0] : '',
-          medical_report_number: reqData.medical_report_number || ''
+          medical_report_number: reqData.medical_report_number || '',
+          doctor_name: reqData.doctor_name || ''
         });
         
         if (reqData.patient) {
@@ -136,7 +137,8 @@ export default function RequestDetails() {
         estimated_cost: Number(editFormData.estimated_cost),
         description: editFormData.description,
         date_of_aid: editFormData.date_of_aid,
-        medical_report_number: editFormData.medical_report_number?.trim() || null
+        medical_report_number: editFormData.medical_report_number?.trim() || null,
+        doctor_name: editFormData.doctor_name?.trim() || ''
       });
       setRequestData(prev => ({
         ...prev,
@@ -144,7 +146,8 @@ export default function RequestDetails() {
         estimated_cost: updated.estimated_cost,
         description: updated.description,
         date_of_aid: updated.date_of_aid,
-        medical_report_number: updated.medical_report_number
+        medical_report_number: updated.medical_report_number,
+        doctor_name: updated.doctor_name
       }));
       setIsEditingRequest(false);
       showNotification('تم تحديث بيانات التقرير الطبي بنجاح');
@@ -509,6 +512,16 @@ export default function RequestDetails() {
                         placeholder="اختياري"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-600 mb-1">اسم الطبيب الكاتب للتقرير:</label>
+                      <input 
+                        type="text" 
+                        value={editFormData.doctor_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, doctor_name: e.target.value })}
+                        className="w-full bg-white border border-gray-300 p-2.5 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-red-400"
+                        placeholder="اختياري"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-black text-gray-600 mb-1">وصف الحالة الطبية والتوصيات:</label>
@@ -535,7 +548,8 @@ export default function RequestDetails() {
                           estimated_cost: requestData.estimated_cost, 
                           description: requestData.description,
                           date_of_aid: requestData.date_of_aid ? requestData.date_of_aid.split('T')[0] : '',
-                          medical_report_number: requestData.medical_report_number || ''
+                          medical_report_number: requestData.medical_report_number || '',
+                          doctor_name: requestData.doctor_name || ''
                         });
                       }}
                       className="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold text-xs px-6 py-2.5 rounded-lg cursor-pointer transition-colors"
@@ -551,6 +565,7 @@ export default function RequestDetails() {
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">تاريخ التنفيذ</span><span className={`font-bold ${isOverdue ? 'text-orange-600' : 'text-gray-800'}`}>{formatDate(requestData.date_of_aid)}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">التكلفة التقديرية</span><span className="font-black text-red-600 text-lg">{formatCurrency(requestData.estimated_cost)}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">رقم التقرير الطبي</span><span className="font-bold text-gray-800 font-mono" dir="ltr">{requestData.medical_report_number || '—'}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">اسم الطبيب الكاتب للتقرير</span><span className="font-bold text-gray-800">{requestData.doctor_name || '—'}</span></div>
                   <div className="col-span-2 mt-2">
                     <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-2">وصف الحالة الطبية والتوصيات:</span>
                     <span className="font-bold block bg-white p-4 rounded-xl border border-red-200 text-gray-700 leading-relaxed">{requestData.description}</span>
