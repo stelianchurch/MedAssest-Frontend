@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import GlobalHeader from '../../components/layout/GlobalHeader'; 
 import { formatDate, formatCurrency } from '../../utils/formatters';
+import SelectOrCreate from '../../components/ui/SelectOrCreate';
 import { 
   createPatient, 
   createFamilyMember, 
   createAidRequest,
   searchPatients,
-  fetchRequestsByPatientId
+  fetchRequestsByPatientId,
+  fetchParishes,
+  createParish,
+  fetchPriests,
+  createPriest
 } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 
@@ -27,17 +32,81 @@ export default function DoctorForm() {
   const initialFormState = {
     beneficiary: {
       fullName: '', gender: 'ذكر', motherName: '', birthPlace: '', birthDate: '', nationalId: '', familyBookNumber: '',
-      address: '', houseStatus: 'ملك', parish: 'رعية الأربعين شهيد', priest: '', landline: '', mobile: '',
+      address: '', houseStatus: 'ملك', landline: '', mobile: '',
       maritalStatus: 'عازب', familyMembersCount: '', jobType: '', job: '', salary: ''
     },
     otherInfo: {
-      surgeryType: 'عمل جراحي', hospital: '', surgeryDate: '', specialNeeds: '', estimatedCost: '', generalNote: '', medicalReportNumber: '', doctorName: ''
+      surgeryType: 'عمل جراحي', hospital: '', surgeryDate: '', specialNeeds: '', estimatedCost: '', generalNote: '', medicalReportNumber: '', doctorName: '', parish: '', priest: ''
     }
   };
 
   const [formData, setFormData] = useState(initialFormState);
   const [familyMembers, setFamilyMembers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🌟 الرعايا والكهنة
+  const [parishes, setParishes] = useState([]);
+  const [priests, setPriests] = useState([]);
+  const [isLoadingPriests, setIsLoadingPriests] = useState(false);
+
+  const loadParishes = async () => {
+    try {
+      const data = await fetchParishes();
+      setParishes(data);
+      return data;
+    } catch {
+      return [];
+    }
+  };
+
+  const loadPriests = async (parishId) => {
+    if (!parishId) {
+      setPriests([]);
+      return [];
+    }
+    setIsLoadingPriests(true);
+    try {
+      const data = await fetchPriests(null, { parishes: parishId });
+      setPriests(data);
+      return data;
+    } catch {
+      setPriests([]);
+      return [];
+    } finally {
+      setIsLoadingPriests(false);
+    }
+  };
+
+  useEffect(() => {
+    loadParishes();
+  }, []);
+
+  useEffect(() => {
+    loadPriests(formData.otherInfo.parish);
+  }, [formData.otherInfo.parish]);
+
+  const handleParishChange = (parishId) => {
+    setFormData((prev) => ({
+      ...prev,
+      otherInfo: { ...prev.otherInfo, parish: parishId, priest: '' }
+    }));
+  };
+
+  const handleCreateParish = async (name) => {
+    const created = await createParish({ name });
+    await loadParishes();
+    return created;
+  };
+
+  const handleCreatePriest = async (name) => {
+    const parishId = formData.otherInfo.parish;
+    if (!parishId) {
+      throw new Error('يرجى اختيار الرعية أولاً');
+    }
+    const created = await createPriest({ name, parish_ids: [parishId] });
+    await loadPriests(parishId);
+    return created;
+  };
 
   const preventInvalidChars = (e) => {
     if (["e", "E", "-", "+"].includes(e.key)) {
@@ -190,6 +259,8 @@ export default function DoctorForm() {
         description: `النوع: ${formData.otherInfo.surgeryType} | الاحتياجات: ${formData.otherInfo.specialNeeds} | ملاحظات: ${formData.otherInfo.generalNote}`,
         ...(medicalReportNumber && { medical_report_number: medicalReportNumber }),
         ...(doctorName && { doctor_name: doctorName }),
+        ...(formData.otherInfo.parish && { parish: Number(formData.otherInfo.parish) }),
+        ...(formData.otherInfo.priest && { priest: Number(formData.otherInfo.priest) }),
       };
 
       await createAidRequest(aidRequestPayload);
@@ -537,6 +608,33 @@ export default function DoctorForm() {
                     <label className="block text-sm font-bold text-red-900 mb-2">اسم الطبيب الكاتب للتقرير</label>
                     <input type="text" value={formData.otherInfo.doctorName} onChange={(e) => handleInputChange('otherInfo', 'doctorName', e.target.value)} className="w-full border border-red-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-red-400 outline-none" placeholder="اختياري — أدخل اسم الطبيب إن وجد" />
                   </div>
+
+                  <SelectOrCreate
+                    label="الرعية التابع لها"
+                    value={formData.otherInfo.parish}
+                    onChange={handleParishChange}
+                    options={parishes}
+                    placeholder="— اختر الرعية —"
+                    onCreate={handleCreateParish}
+                    createTitle="إضافة رعية جديدة"
+                    createFieldLabel="اسم الرعية"
+                    createPlaceholder="مثال: رعية الأربعين شهيد"
+                  />
+
+                  <SelectOrCreate
+                    label="كاهن الرعية"
+                    value={formData.otherInfo.priest}
+                    onChange={(id) => handleInputChange('otherInfo', 'priest', id)}
+                    options={priests}
+                    placeholder={isLoadingPriests ? 'جاري التحميل...' : '— اختر الكاهن —'}
+                    disabled={!formData.otherInfo.parish}
+                    disabledHint="يرجى اختيار الرعية أولاً لعرض الكهنة"
+                    onCreate={handleCreatePriest}
+                    createTitle="إضافة كاهن جديد"
+                    createFieldLabel="اسم الكاهن"
+                    createPlaceholder="مثال: الأب يوحنا"
+                    createHint="سيتم ربط الكاهن بالرعية المختارة تلقائياً"
+                  />
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-red-900 mb-2">ملاحظات الطبيب والتشخيص *</label>

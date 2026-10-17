@@ -306,6 +306,65 @@ export const deletePatientFamilyMember = async (memberId) => {
   return response.data;
 };
 
+// ==========================================
+// 🌟 الرعايا والكهنة (Parishes & Priests)
+// ==========================================
+
+export const fetchParishes = async (signal, params = {}) => {
+  const response = await api.get('patients/parishes/', buildRequestConfig(signal, params));
+  return asArray(response.data);
+};
+
+export const createParish = async (parishData) => {
+  try {
+    const response = await api.post('patients/parishes/', parishData);
+    return response.data;
+  } catch (error) {
+    const errData = error.response?.data;
+    if (errData?.name) {
+      throw new Error('اسم الرعية موجود مسبقاً في النظام.');
+    }
+    const errorMsg = errData ? Object.values(errData).flat().join(' | ') : 'فشل إنشاء الرعية';
+    throw new Error(errorMsg);
+  }
+};
+
+export const updateParish = async (id, parishData) => {
+  const response = await api.patch(`patients/parishes/${id}/`, parishData);
+  return response.data;
+};
+
+export const deleteParish = async (id) => {
+  const response = await api.delete(`patients/parishes/${id}/`);
+  return response.data;
+};
+
+export const fetchPriests = async (signal, params = {}) => {
+  const response = await api.get('patients/priests/', buildRequestConfig(signal, params));
+  return asArray(response.data);
+};
+
+export const createPriest = async (priestData) => {
+  try {
+    const response = await api.post('patients/priests/', priestData);
+    return response.data;
+  } catch (error) {
+    const errData = error.response?.data;
+    const errorMsg = errData ? Object.values(errData).flat().join(' | ') : 'فشل إنشاء الكاهن';
+    throw new Error(errorMsg);
+  }
+};
+
+export const updatePriest = async (id, priestData) => {
+  const response = await api.patch(`patients/priests/${id}/`, priestData);
+  return response.data;
+};
+
+export const deletePriest = async (id) => {
+  const response = await api.delete(`patients/priests/${id}/`);
+  return response.data;
+};
+
 export const deleteSystemUser = async (userId) => {
   const response = await api.delete(`users/${userId}/`);
   return response.data;

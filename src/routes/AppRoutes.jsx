@@ -14,6 +14,7 @@ import Reports from '../pages/admin/Reports';
 import Supporters from '../pages/admin/Supporters';
 import SupportersManager from '../pages/admin/SupportersManager';
 import PatientDetails from '../pages/admin/PatientDetails';
+import Settings from '../pages/admin/Settings';
 
 // تجميع الصفحات المشتركة
 const ManagementRoutes = () => (
@@ -27,6 +28,7 @@ const ManagementRoutes = () => (
     <Route path="reports" element={<Reports />} />
     <Route path="supporters" element={<Supporters />} />
     <Route path="supporters-manager" element={<SupportersManager />} />
+    <Route path="settings" element={<Settings />} />
   </Routes>
 );
 

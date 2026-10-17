@@ -99,6 +99,9 @@ function SidebarContent({ basePath, userRole, userName, onNavigate, onLogout }) 
             <NavLink to="/admin/supporters-manager" className={adminLinkStyle} onClick={handleNavClick}>
               <span className="text-xl">🏢</span> إدارة قوائم الجهات
             </NavLink>
+            <NavLink to="/admin/settings" className={adminLinkStyle} onClick={handleNavClick}>
+              <span className="text-xl">⛪</span> الرعايا والكهنة
+            </NavLink>
             <button
               type="button"
               onClick={handleExportExcel}

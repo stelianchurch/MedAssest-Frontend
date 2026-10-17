@@ -13,8 +13,13 @@ import {
   removeProviderFromRequest,
   updateProviderContribution,
   updateAidRequest,
-  updatePatientDetails 
+  updatePatientDetails,
+  fetchParishes,
+  fetchPriests,
+  createParish,
+  createPriest
 } from '../../services/api';
+import SelectOrCreate from '../../components/ui/SelectOrCreate';
 import { useAuth, ROLES } from '../../context/AuthContext';
 import { useToast } from '../../hooks/useToast'; 
 
@@ -36,7 +41,55 @@ export default function RequestDetails() {
   
   // 🌟 حالات تعديل الطلب الطبي أصبحت تشمل التاريخ
   const [isEditingRequest, setIsEditingRequest] = useState(false);
-  const [editFormData, setEditFormData] = useState({ place_of_aid: '', estimated_cost: '', description: '', date_of_aid: '', medical_report_number: '', doctor_name: '' });
+  const [editFormData, setEditFormData] = useState({ place_of_aid: '', estimated_cost: '', description: '', date_of_aid: '', medical_report_number: '', doctor_name: '', parish: '', priest: '' });
+
+  // 🌟 الرعايا والكهنة
+  const [parishes, setParishes] = useState([]);
+  const [priests, setPriests] = useState([]);
+  const [isLoadingPriests, setIsLoadingPriests] = useState(false);
+
+  const loadParishes = async () => {
+    try {
+      const data = await fetchParishes();
+      setParishes(data);
+    } catch {
+      setParishes([]);
+    }
+  };
+
+  const loadPriests = async (parishId) => {
+    if (!parishId) {
+      setPriests([]);
+      return;
+    }
+    setIsLoadingPriests(true);
+    try {
+      const data = await fetchPriests(null, { parishes: parishId });
+      setPriests(data);
+    } catch {
+      setPriests([]);
+    } finally {
+      setIsLoadingPriests(false);
+    }
+  };
+
+  const handleEditParishChange = (parishId) => {
+    setEditFormData((prev) => ({ ...prev, parish: parishId, priest: '' }));
+  };
+
+  const handleCreateParish = async (name) => {
+    const created = await createParish({ name });
+    await loadParishes();
+    return created;
+  };
+
+  const handleCreatePriest = async (name) => {
+    const parishId = editFormData.parish;
+    if (!parishId) throw new Error('يرجى اختيار الرعية أولاً');
+    const created = await createPriest({ name, parish_ids: [parishId] });
+    await loadPriests(parishId);
+    return created;
+  };
   const [isSavingRequest, setIsSavingRequest] = useState(false);
 
   const [isEditingPatient, setIsEditingPatient] = useState(false);
@@ -76,9 +129,14 @@ export default function RequestDetails() {
           description: reqData.description || '',
           date_of_aid: reqData.date_of_aid ? reqData.date_of_aid.split('T')[0] : '',
           medical_report_number: reqData.medical_report_number || '',
-          doctor_name: reqData.doctor_name || ''
+          doctor_name: reqData.doctor_name || '',
+          parish: reqData.parish || '',
+          priest: reqData.priest || ''
         });
-        
+
+        loadParishes();
+        loadPriests(reqData.parish);
+
         if (reqData.patient) {
           const [patData, famData, provData] = await Promise.all([
             fetchPatientDetails(reqData.patient, abortController.signal),
@@ -138,7 +196,9 @@ export default function RequestDetails() {
         description: editFormData.description,
         date_of_aid: editFormData.date_of_aid,
         medical_report_number: editFormData.medical_report_number?.trim() || null,
-        doctor_name: editFormData.doctor_name?.trim() || ''
+        doctor_name: editFormData.doctor_name?.trim() || '',
+        parish: editFormData.parish ? Number(editFormData.parish) : null,
+        priest: editFormData.priest ? Number(editFormData.priest) : null
       });
       setRequestData(prev => ({
         ...prev,
@@ -147,7 +207,11 @@ export default function RequestDetails() {
         description: updated.description,
         date_of_aid: updated.date_of_aid,
         medical_report_number: updated.medical_report_number,
-        doctor_name: updated.doctor_name
+        doctor_name: updated.doctor_name,
+        parish: updated.parish,
+        priest: updated.priest,
+        parish_name: updated.parish_name,
+        priest_name: updated.priest_name
       }));
       setIsEditingRequest(false);
       showNotification('تم تحديث بيانات التقرير الطبي بنجاح');
@@ -522,6 +586,31 @@ export default function RequestDetails() {
                         placeholder="اختياري"
                       />
                     </div>
+                    <SelectOrCreate
+                      label="الرعية التابع لها:"
+                      value={editFormData.parish}
+                      onChange={handleEditParishChange}
+                      options={parishes}
+                      placeholder="— اختر الرعية —"
+                      onCreate={handleCreateParish}
+                      createTitle="إضافة رعية جديدة"
+                      createFieldLabel="اسم الرعية"
+                      createPlaceholder="مثال: رعية الأربعين شهيد"
+                    />
+                    <SelectOrCreate
+                      label="كاهن الرعية:"
+                      value={editFormData.priest}
+                      onChange={(id) => setEditFormData({ ...editFormData, priest: id })}
+                      options={priests}
+                      placeholder={isLoadingPriests ? 'جاري التحميل...' : '— اختر الكاهن —'}
+                      disabled={!editFormData.parish}
+                      disabledHint="يرجى اختيار الرعية أولاً لعرض الكهنة"
+                      onCreate={handleCreatePriest}
+                      createTitle="إضافة كاهن جديد"
+                      createFieldLabel="اسم الكاهن"
+                      createPlaceholder="مثال: الأب يوحنا"
+                      createHint="سيتم ربط الكاهن بالرعية المختارة تلقائياً"
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-black text-gray-600 mb-1">وصف الحالة الطبية والتوصيات:</label>
@@ -549,7 +638,9 @@ export default function RequestDetails() {
                           description: requestData.description,
                           date_of_aid: requestData.date_of_aid ? requestData.date_of_aid.split('T')[0] : '',
                           medical_report_number: requestData.medical_report_number || '',
-                          doctor_name: requestData.doctor_name || ''
+                          doctor_name: requestData.doctor_name || '',
+                          parish: requestData.parish || '',
+                          priest: requestData.priest || ''
                         });
                       }}
                       className="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold text-xs px-6 py-2.5 rounded-lg cursor-pointer transition-colors"
@@ -566,6 +657,8 @@ export default function RequestDetails() {
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">التكلفة التقديرية</span><span className="font-black text-red-600 text-lg">{formatCurrency(requestData.estimated_cost)}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">رقم التقرير الطبي</span><span className="font-bold text-gray-800 font-mono" dir="ltr">{requestData.medical_report_number || '—'}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">اسم الطبيب الكاتب للتقرير</span><span className="font-bold text-gray-800">{requestData.doctor_name || '—'}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">الرعية التابع لها</span><span className="font-bold text-gray-800">{requestData.parish_name || '—'}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-1">كاهن الرعية</span><span className="font-bold text-gray-800">{requestData.priest_name || '—'}</span></div>
                   <div className="col-span-2 mt-2">
                     <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-black mb-2">وصف الحالة الطبية والتوصيات:</span>
                     <span className="font-bold block bg-white p-4 rounded-xl border border-red-200 text-gray-700 leading-relaxed">{requestData.description}</span>
